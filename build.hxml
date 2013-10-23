@@ -1,0 +1,3 @@
+-cp irc
+-neko main.n
+-main Main
