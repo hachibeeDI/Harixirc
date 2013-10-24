@@ -14,6 +14,11 @@ class Irc {
         return this;
     }
 
+    private function send(msg): Void {
+        this.conn.send(msg);
+        return ;
+    }
+
     public function read(): Option<String> {
         var msg = Std.string(this.conn.receive()).trim();
         if (msg == "") {
@@ -26,25 +31,25 @@ class Irc {
 
     public function login(nickname, username, servername, realname): Void {
         var msg = 'USER ${username} localhost ${servername} ${realname}';
-        this.conn.send(msg);
-        this.conn.send('NICK ${nickname}');
+        this.send(msg);
+        this.send('NICK ${nickname}');
     }
 
     public function join(channel): Void {
-        this.conn.send('JOIN #${channel}');
+        this.send('JOIN #${channel}');
     }
 
     public function ping(): Void {
         // TODO: 途中
-        this.conn.send('PING ');
+        this.send('PING ');
     }
 
     public function pong(daemon): Void {
-        this.conn.send('PING ${daemon}');
+        this.send('PING ${daemon}');
     }
 
     public function talk(msg, channel): Void {
-        this.conn.send('PRIVMSG #${channel} :${msg}');
+        this.send('PRIVMSG #${channel} :${msg}');
     }
 
     public function close():Void {

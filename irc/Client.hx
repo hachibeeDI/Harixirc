@@ -11,7 +11,7 @@ class Client {
         var msg = irc.read();
         switch (msg) {
             case None:
-                Sys.sleep(2);  // TODO: この秒数は設定でいじれるようにしておこう
+                Sys.sleep(1);
                 return None;
             case Some(m):
                 var msgs = m.split(" ");

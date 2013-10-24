@@ -1,6 +1,7 @@
 package irc;
 
 import sys.net.Socket;
+import haxe.remoting.AsyncConnection;
 import sys.net.Host;
 
 
@@ -15,7 +16,8 @@ class Connect {
     }
 
     public function send(msg: String): Void {
-        this.conn.write('${msg}${END_OF_MSG}');
+        this.conn.output.writeString('${msg}${END_OF_MSG}');
+        // this.conn.write('${msg}${END_OF_MSG}');
     }
 
     public function receive(): String {
@@ -25,4 +27,5 @@ class Connect {
     public function close(): Void {
         this.conn.close();
     }
+
 }
