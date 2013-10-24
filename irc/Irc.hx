@@ -46,5 +46,9 @@ class Irc {
     public function talk(msg, channel): Void {
         this.conn.send('PRIVMSG #${channel} :${msg}');
     }
+
+    public function close():Void {
+        this.conn.close();
+    }
 }
 

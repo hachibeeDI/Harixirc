@@ -1,21 +1,26 @@
 package irc;
 
+import haxe.ds.Option;
+
+
 class Client {
 
     public function new() { }
-    static public function reader(irc: Irc) {
+    // TODO: Eitherの方がよい？
+    static public function reader(irc: Irc): Option<String> {
         var msg = irc.read();
         switch (msg) {
             case None:
-                Sys.sleep(2);
+                Sys.sleep(2);  // TODO: この秒数は設定でいじれるようにしておこう
+                return None;
             case Some(m):
                 var msgs = m.split(" ");
                 switch (msgs) {
                     case [type, daemon] if (type == "PING"):
-                        trace("イヤーーッ！");
                         irc.pong(daemon);
+                        return None;
                     case _:
-                        trace(msgs);
+                        return Option.Some(m);
                 }
         }
     }
