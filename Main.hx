@@ -7,24 +7,31 @@ import haxe.io.Input;
 
 import irc.Client;
 import irc.Connect;
+import irc.Context;
 import irc.Irc;
+import irc.event.Received;
+import irc.event.Listener;
 
 using StringTools;
 
 class Main {
     static inline var CHAN = "testt";
     static inline var SERVER = "10.30.138.100";
+    static inline var LOCALSERVER = "localhost";
     static inline var PORT = 6667;
 
 
     public static function main() {
+        register_default_event();
         var th_dque = new Deque<String>();
         var irc = new Irc().connect(SERVER, PORT);
-        irc.login("hachitest", "doguratest", "test.com", "daiki");
+        irc.login("hachi", "doguratest", "test.com", "daiki");
         irc.join(CHAN);
-        var reader_thead = Thread.create(reader.bind(irc));
-        reader_thead.sendMessage(Thread.current());
-        reader_thead.sendMessage(th_dque);
+
+        var ctx = new Context(irc, th_dque);
+        var reader_thead = Client.async_reader(ctx, Thread.current());
+        // reader_thead.sendMessage(Thread.current());
+        // reader_thead.sendMessage(th_dque);
         th_dque.add("--reading");
 
         // 入力待ちスレッド
@@ -40,22 +47,6 @@ class Main {
         Thread.readMessage(true);
     }
 
-    static function reader(irc: Irc) {
-        var main: Thread = Thread.readMessage(true);
-        var deque: Deque<String> = Thread.readMessage(true);
-        try {
-            while (true) {
-                switch (Client.reader(irc)) {
-                    case None: return;
-                    case Some(msg): deque.add(msg);
-                }
-            }
-        } catch(_: Dynamic) {
-            irc.close();
-            main.sendMessage("connection error!");
-        }
-    }
-
     static function writer(irc: Irc) {
         var deque: Deque<String> = Thread.readMessage(true);
         var input: KeyInput = Thread.readMessage(true);
@@ -68,6 +59,35 @@ class Main {
             irc.talk(msg, CHAN);
         }
         deque.add('---write error');
+    }
+
+    /**
+      * とりあえずの
+     */
+    static function register_default_event() {
+        Listener.prepare();
+        Listener.add(
+            Received.PING('')
+            , function(e: Received, ctx: Context) {
+                var daemon = e.getParameters()[0]; // ダサすぎ・・・
+                ctx.irc.pong(daemon);
+            }
+        );
+        Listener.add(
+            Received.PRIVMSG(null, null)
+            , function(e: Received, ctx) {
+                var targ = e.getParameters()[0]; // はやくなんとかしないと
+                var msg = e.getParameters()[1];
+                ctx.shared_deque.add(msg);
+            }
+        );
+        Listener.add(
+            Received.ANY(null)
+            , function(e: Received, ctx) {
+                var msg = e.getParameters()[0];
+                ctx.shared_deque.add(msg);
+            }
+        );
     }
 }
 

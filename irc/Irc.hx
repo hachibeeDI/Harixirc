@@ -2,6 +2,8 @@ package irc;
 
 import haxe.ds.Option;
 
+import irc.event.Received;
+
 using StringTools;
 
 
@@ -19,14 +21,23 @@ class Irc {
         return ;
     }
 
-    public function read(): Option<String> {
+    public function read(): Option<Received> {
         var msg = Std.string(this.conn.receive()).trim();
         if (msg == "") {
             return Option.None;
         }
-        else {
-            return Option.Some(msg);
-        }
+
+        var msgs = msg.split(" ");
+        return Option.Some(
+                switch (msgs) {
+                    case [type, daemon] if (type == "PING"):
+                        Received.PING(daemon);
+                    case [type, targ, m] if (type == "PRIVMSG"):
+                        Received.PRIVMSG(targ, m);
+                    case _:
+                        Received.ANY(msg);
+                }
+        );
     }
 
     public function login(nickname, username, servername, realname): Void {
@@ -56,4 +67,3 @@ class Irc {
         this.conn.close();
     }
 }
-
