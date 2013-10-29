@@ -66,4 +66,8 @@ class Irc {
     public function close():Void {
         this.conn.close();
     }
+
+    public function is_connected(): Bool {
+        return this.conn != null;
+    }
 }

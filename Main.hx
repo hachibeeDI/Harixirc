@@ -11,6 +11,8 @@ import irc.Context;
 import irc.Irc;
 import irc.event.Received;
 import irc.event.ReceiveListener;
+import irc.event.Sending;
+import irc.event.SendingListener;
 
 import growl.Growl;
 
@@ -26,21 +28,18 @@ class Main {
 
     public static function main() {
         register_default_event();
+        register_default_writer();
         var th_dque = new Deque<String>();
-        var irc = new Irc().connect(SERVER, PORT);
-        irc.login("hachi", "doguratest", "test.com", "daiki");
-        irc.join(CHAN);
+        var irc = new Irc();
+        // irc.join(CHAN);
 
-        var ctx = new Context(irc, th_dque);
-        var reader_thead = Client.async_reader(ctx, Thread.current());
-        // reader_thead.sendMessage(Thread.current());
-        // reader_thead.sendMessage(th_dque);
+        var ctx = new Context(irc, th_dque, CHAN);
+        var main_thread = Thread.current();
+        var reader_thead = Client.async_reader(ctx, main_thread);
         th_dque.add("--reading");
 
         // 入力待ちスレッド
-        var writer_thead = Thread.create(writer.bind(irc));
-        writer_thead.sendMessage(th_dque);
-        writer_thead.sendMessage(new KeyInput());
+        var writer_thead = Client.async_writer(ctx, new KeyInput());
         th_dque.add("--write prepare");
  
         while (true) {
@@ -48,20 +47,6 @@ class Main {
         }
 
         Thread.readMessage(true);
-    }
-
-    static function writer(irc: Irc) {
-        var deque: Deque<String> = Thread.readMessage(true);
-        var input: KeyInput = Thread.readMessage(true);
-        // TODO: この部分も後で抽象化
-        while (true) {
-            var m = input.readLine();
-            if (m == null) continue;
-            var msg = m.trim();
-            if (msg == "") continue;
-            irc.talk(msg, CHAN);
-        }
-        deque.add('---write error');
     }
 
     /**
@@ -88,6 +73,38 @@ class Main {
             , function(e: Received, ctx) {
                 var msg = e.getParameters()[0];
                 ctx.shared_deque.add(msg);
+            }
+        );
+    }
+
+    public static function register_default_writer() {
+        SendingListener.add(
+            Sending.CONNECT(null, null)
+            , function(e: Sending, ctx) {
+                var params = e.getParameters();
+                var server = params[0];
+                var port = Std.parseInt(Std.string(params[1]));
+                ctx.irc.connect(server, port);
+                ctx.irc.login("hachi", "doguratest", "test.com", "daiki");  // TODO: #46あたりで
+            }
+        );
+        SendingListener.add(
+            Sending.JOIN(null)
+            , function(e: Sending, ctx) {
+                var chan = e.getParameters()[0];
+                ctx.current_channel = chan;
+                ctx.irc.join(chan);
+            }
+        );
+        SendingListener.add(
+            Sending.MESSAGE(null)
+            , function(e: Sending, ctx) {
+                if (ctx.current_channel == null) {
+                    ctx.shared_deque.push("You did not join any channel yet");
+                    return ;
+                }
+                var msg = e.getParameters()[0];
+                ctx.irc.talk(msg, ctx.current_channel);
             }
         );
     }
