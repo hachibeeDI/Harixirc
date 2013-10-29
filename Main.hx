@@ -10,7 +10,7 @@ import irc.Connect;
 import irc.Context;
 import irc.Irc;
 import irc.event.Received;
-import irc.event.Listener;
+import irc.event.ReceiveListener;
 
 import growl.Growl;
 
@@ -68,15 +68,15 @@ class Main {
       * とりあえずの
      */
     static function register_default_event() {
-        Listener.prepare();
-        Listener.add(
+        ReceiveListener.prepare();
+        ReceiveListener.add(
             Received.PING('')
             , function(e: Received, ctx: Context) {
                 var daemon = e.getParameters()[0]; // ダサすぎ・・・
                 ctx.irc.pong(daemon);
             }
         );
-        Listener.add(
+        ReceiveListener.add(
             Received.PRIVMSG(null, null)
             , function(e: Received, ctx) {
                 var targ = e.getParameters()[0]; // はやくなんとかしないと
@@ -84,7 +84,7 @@ class Main {
                 ctx.shared_deque.add(msg);
             }
         );
-        Listener.add(
+        ReceiveListener.add(
             Received.ANY(null)
             , function(e: Received, ctx) {
                 var msg = e.getParameters()[0];

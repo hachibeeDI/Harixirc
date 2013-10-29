@@ -6,7 +6,7 @@ import irc.event.Received;
 using Lambda;
 
 
-class Listener {
+class ReceiveListener {
     // static inline var listeners: Array<irc.Irc -> Void> = [];
     private static var priv_msg(default, null): Array<Received -> Context -> Void>;
     private static var ping(default, null): Array<Received -> Context -> Void>;

@@ -6,7 +6,7 @@ import neko.vm.Deque;
 
 import irc.Context;
 import irc.event.Received;
-import irc.event.Listener;
+import irc.event.ReceiveListener;
 
 
 class Client {
@@ -29,7 +29,7 @@ class Client {
                     case None:
                         Sys.sleep(1);
                     case Some(e):
-                        Listener.notify(e, ctx);
+                        ReceiveListener.notify(e, ctx);
                 }
             }
         } catch(_: Dynamic) {
