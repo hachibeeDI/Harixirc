@@ -68,7 +68,6 @@ class Main {
       * とりあえずの
      */
     static function register_default_event() {
-        ReceiveListener.prepare();
         ReceiveListener.add(
             Received.PING('')
             , function(e: Received, ctx: Context) {
