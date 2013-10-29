@@ -12,6 +12,9 @@ import irc.Irc;
 import irc.event.Received;
 import irc.event.Listener;
 
+import growl.Growl;
+
+
 using StringTools;
 
 class Main {
