@@ -4,6 +4,7 @@ import neko.vm.Thread;
 import neko.vm.Deque;
 import neko.vm.Mutex;
 import haxe.io.Input;
+import haxe.ds.Option;
 
 import irc.Client;
 import irc.Connect;
@@ -13,13 +14,14 @@ import irc.event.Received;
 import irc.event.ReceiveListener;
 import irc.event.Sending;
 import irc.event.SendingListener;
-
-import growl.Growl;
+import configure.Load;
 
 
 using StringTools;
 
+
 class Main {
+    static var CONF: Load;
     static inline var CHAN = "testt";
     static inline var SERVER = "10.30.138.100";
     static inline var LOCALSERVER = "localhost";
@@ -27,6 +29,8 @@ class Main {
 
 
     public static function main() {
+        CONF = new Load();
+
         register_default_event();
         register_default_writer();
         var th_dque = new Deque<String>();
@@ -83,9 +87,20 @@ class Main {
             , function(e: Sending, ctx) {
                 var params = e.getParameters();
                 var server = params[0];
-                var port = Std.parseInt(Std.string(params[1]));
-                ctx.irc.connect(server, port);
-                ctx.irc.login("hachi", "doguratest", "test.com", "daiki");  // TODO: #46あたりで
+                var port: Option<Int> = params[1];
+                var conf = CONF.get_conf();
+                switch (port) {
+                    case Some(i): ctx.irc.connect(server, i);
+                    case None:
+                        trace('hoge');
+                        var serv = Reflect.field(conf.server, server);
+                        if (serv == null) {
+                            trace('invalid servername');
+                            return;
+                        }
+                        ctx.irc.connect(serv.server, serv.port);
+                }
+                ctx.irc.login(conf.nickname, conf.username, conf.localaddress, conf.realname);
             }
         );
         SendingListener.add(

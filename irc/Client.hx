@@ -64,8 +64,10 @@ class Client {
                 switch (msg.split(" ")) {
                 case ["/join", chan]:
                     Sending.JOIN(chan);
+                case ["/connect", server]:
+                    Sending.CONNECT(server, Option.None);
                 case ["/connect", server, port]:
-                    Sending.CONNECT(server, Std.parseInt(port));
+                    Sending.CONNECT(server, Option.Some(Std.parseInt(port)));
                 case _:
                     Sending.MESSAGE(msg);
             }
